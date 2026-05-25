@@ -164,7 +164,7 @@ def generate_feed():
         L.append(f'  <itunes:subtitle>{x(strip_html(show["subtitle"]))}</itunes:subtitle>')
 
     L.append(f'  <itunes:type>episodic</itunes:type>')
-    L.append(f'  <itunes:explicit>{"Yes" if show.get("explicit") else "No"}</itunes:explicit>')
+    L.append(f'  <itunes:explicit>{"true" if show.get("explicit") else "false"}</itunes:explicit>')
 
     if show.get('description'):
         L.append(f'  <itunes:summary>{cdata(show["description"])}</itunes:summary>')
@@ -226,7 +226,7 @@ def generate_feed():
         L.append(f'    <enclosure url="{xa(op3_url)}" length="{ep.get("filesize", 0)}" type="{mime}"/>')
 
         L.append(f'    <itunes:author>{x(ep.get("author") or show.get("author", ""))}</itunes:author>')
-        L.append(f'    <itunes:explicit>{"Yes" if ep.get("explicit") else "No"}</itunes:explicit>')
+        L.append(f'    <itunes:explicit>{"true" if ep.get("explicit") else "false"}</itunes:explicit>')
 
         if ep.get('duration') is not None:
             L.append(f'    <itunes:duration>{x(ep["duration"])}</itunes:duration>')
