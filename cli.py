@@ -358,6 +358,7 @@ def add_episode():
     ep_type = prompt_choice('Episode type', ['full', 'trailer', 'bonus'], 'full')
     artwork = prompt('Episode artwork URL (optional)')
     author = prompt('Episode author (optional)')
+    link = prompt('Episode webpage link (optional, shown as "From This Episode" in Apple Podcasts)')
     explicit = prompt_bool('Explicit?', False)
     transcript = prompt('Transcript filename in ./media/ (SRT/VTT/TXT, optional)')
     duration = prompt('Duration (HH:MM:SS or MM:SS, optional)')
@@ -392,6 +393,7 @@ def add_episode():
         'title': title,
         'subtitle': subtitle,
         'description': description,
+        'link': link,
         'filename': filename,
         'pubDate': pub_date,
         'episodeNumber': int(ep_num) if ep_num else None,
@@ -462,6 +464,14 @@ def edit_episode():
         ep_type = prompt_choice('Episode type', ['full', 'trailer', 'bonus'], ep.get('episodeType', 'full'))
         artwork = prompt('Episode artwork URL', ep.get('artwork', ''))
         author = prompt('Episode author', ep.get('author', ''))
+
+        # Episode webpage link. Enter keeps the current value; "-" clears it
+        # (useful for stripping a link inherited from an imported feed).
+        current_link = ep.get('link', '')
+        print(f'    Current link: {current_link or "(none)"}')
+        link_in = prompt('Episode webpage link (Enter=keep, "-" to clear)', current_link or None)
+        link = None if link_in == '-' else link_in
+
         explicit = prompt_bool('Explicit?', ep.get('explicit', False))
         duration = prompt('Duration', ep.get('duration', ''))
 
@@ -469,6 +479,7 @@ def edit_episode():
             'title': title,
             'subtitle': subtitle or None,
             'description': description,
+            'link': link,
             'filename': filename,
             'pubDate': pub_date,
             'episodeNumber': int(ep_num) if ep_num else None,
@@ -479,7 +490,7 @@ def edit_episode():
             'explicit': explicit,
             'duration': duration or None,
             'filesize': filesize(os.path.join(MEDIA_DIR, filename))
-        }.items() if v is not None or k in ('explicit',)}
+        }.items() if v is not None or k in ('explicit', 'link')}
         store.update_episode(ep_id, updates)
 
     elif section == 'Chapters':

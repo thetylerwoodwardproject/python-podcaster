@@ -164,6 +164,23 @@ Chapters follow the [Podcast Index JSON format](https://github.com/Podcast-Index
 Each chapter supports a start time, title, optional link URL, and optional image URL.
 Chapter JSON files are written to `./media/` automatically when the feed regenerates.
 
+## Episode links ("From This Episode")
+
+Each episode can carry a webpage link, emitted as the item's `<link>` element.
+Apple Podcasts reads links from your episode data (the `<link>` element and any
+`<a href>` in the show notes), fetches OpenGraph metadata from the destination,
+and surfaces them as "From This Episode" cards. It is not a `podcast:` namespace
+tag -- it is the standard RSS `<link>` plus whatever links live in your notes.
+
+- **Add episode** prompts for an optional "Episode webpage link".
+- **Edit episode -> Basic info** shows the current link; press Enter to keep it,
+  type a new URL to replace it, or type `-` to clear it.
+
+Note: importing from another feed carries over that feed's `<link>` (and the
+links baked into its show notes). If you migrated from a host like rss.com and
+still see its page under "From This Episode," clear or replace the episode link
+here and strip any leftover links from the show notes.
+
 ## Transcripts
 
 Place SRT, VTT, or TXT files in `./media/` and enter the filename when adding
