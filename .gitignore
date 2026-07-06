@@ -1,0 +1,8 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Generated at runtime (not source)
+podcast.json
+feed.xml
+media/
