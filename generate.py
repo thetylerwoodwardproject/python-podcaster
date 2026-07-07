@@ -4,7 +4,7 @@ generate.py -- regenerates feed.xml from the database.
 Run this via cron to publish scheduled episodes automatically.
 
 Example crontab entry (runs daily at 8am):
-  0 8 * * * cd /opt/podcast-host && python3 generate.py >> /var/log/podcast.log 2>&1
+  0 8 * * * cd /opt/termicast && python3 generate.py >> /var/log/termicast.log 2>&1
 """
 import os
 import sys

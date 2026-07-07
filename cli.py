@@ -593,7 +593,7 @@ def download_file(url, dest_path, label=''):
     url = re.sub(r'^https?://[^/]+/e(?:,\w+)*/(?=https?://)', '', url)
     try:
         res = requests.get(url, stream=True, timeout=30,
-                           headers={'User-Agent': 'podcast-host-importer/1.0'})
+                           headers={'User-Agent': 'termicast-importer/1.0'})
         res.raise_for_status()
         total = int(res.headers.get('content-length', 0))
         downloaded = 0
@@ -624,7 +624,7 @@ def import_from_rss():
 
     print('  Fetching feed...')
     try:
-        res = requests.get(feed_url, timeout=15, headers={'User-Agent': 'podcast-host-importer/1.0'})
+        res = requests.get(feed_url, timeout=15, headers={'User-Agent': 'termicast-importer/1.0'})
         res.raise_for_status()
         xml_text = res.text
     except Exception as e:
@@ -840,15 +840,83 @@ def import_from_rss():
     regenerate()
 
 
+# ─── Mirror external feed ─────────────────────────────────────────────────────
+
+def mirror_menu():
+    import mirror as mirrorgen
+
+    divider('Mirror External Feed')
+    data = store.load()
+    cfg = data.get('mirror') or {}
+
+    if cfg.get('sourceUrl'):
+        print(f'  Source:  {cfg["sourceUrl"]}')
+        print(f'  Mirror:  {store.get_show().get("baseUrl", "").rstrip("/")}/mirror/feed.xml')
+        print('''
+  The mirror is a verbatim copy of the source feed: every tag (podcast:guid,
+  value splits, podroll, chapters...) is preserved exactly. Only asset URLs
+  are rewritten to local downloads so the copy keeps playing if the source
+  host goes down.''')
+        choices = ['Sync now', 'Change source URL', 'Remove mirror', 'Back']
+    else:
+        print('''
+  Mirror an existing feed (e.g. your current host's RSS URL) onto this
+  server as an exact copy. The source XML is kept byte-for-byte; audio,
+  transcripts, chapters, and artwork are downloaded locally so the mirror
+  is a self-contained failover if anything happens to your primary host.
+
+  Serve it by symlinking the ./mirror/ folder next to feed.xml, e.g.:
+    ln -s /opt/termicast/mirror /var/www/html/mirror
+
+  Re-sync on a schedule with cron:
+    0 9 * * * cd /opt/termicast && python3 mirror.py >> /var/log/termicast-mirror.log 2>&1''')
+        choices = ['Set up mirror', 'Back']
+
+    action = prompt_choice('Mirror', choices)
+
+    if action == 'Back':
+        return
+
+    if action in ('Set up mirror', 'Change source URL'):
+        url = prompt('Source feed URL', cfg.get('sourceUrl'), required=True)
+        data = store.load()
+        data['mirror'] = {'sourceUrl': url}
+        store.save(data)
+        print('\n  Mirror configured.')
+        if prompt_bool('Run the first sync now? (downloads all audio/artwork)', True):
+            action = 'Sync now'
+        else:
+            return
+
+    if action == 'Sync now':
+        print()
+        try:
+            stats = mirrorgen.sync_mirror(log=print)
+            print(f'\n  Mirror is live at {stats["feed_url"]}')
+            if stats['assets_failed']:
+                print(f'  Warning: {stats["assets_failed"]} assets failed to download; '
+                      'their URLs still point at the source host. Re-run to retry.')
+        except Exception as e:
+            print(f'\n  Sync failed: {e}')
+        print()
+
+    elif action == 'Remove mirror':
+        if prompt_bool('Remove mirror configuration? (downloaded files are NOT deleted)', False):
+            data = store.load()
+            data.pop('mirror', None)
+            store.save(data)
+            print('\n  Mirror removed. Delete ./mirror/ manually if you want the files gone.\n')
+
+
 # ─── First-run wizard ─────────────────────────────────────────────────────────
 
 def first_run_wizard():
     print('\n╔══════════════════════════════════════╗')
-    print('║     Welcome to podcast-host!         ║')
+    print('║     Welcome to Termicast!            ║')
     print('║     Let\'s get you set up.            ║')
     print('╚══════════════════════════════════════╝')
     print("""
-  This looks like your first time running podcast-host.
+  This looks like your first time running Termicast.
   We need a few basics before you can do anything else.
 """)
 
@@ -917,7 +985,7 @@ def main():
         first_run_wizard()
 
     print('\n╔══════════════════════════════════════╗')
-    print('║        Podcast Feed Manager          ║')
+    print('║   Termicast - Podcast Feed Manager   ║')
     print('╚══════════════════════════════════════╝')
 
     while True:
@@ -928,6 +996,7 @@ def main():
             'List episodes',
             'Edit show settings',
             'Import from RSS feed',
+            'Mirror external feed',
             'Exit'
         ])
 
@@ -946,6 +1015,8 @@ def main():
             setup_show()
         elif action == 'Import from RSS feed':
             import_from_rss()
+        elif action == 'Mirror external feed':
+            mirror_menu()
 
 
 if __name__ == '__main__':
