@@ -197,6 +197,52 @@ crontab -e   # add:
 The mirror is then live at `https://audio.example.com/mirror/feed.xml`,
 with all its media under `https://audio.example.com/mirror/media/`.
 
+### Promoting the mirror to primary
+
+If the mirrored host goes down for good (or you're leaving it), "Promote
+mirror to primary" in the mirror menu adopts the mirror into *your* feed so
+this server becomes the real host and you can keep publishing new episodes.
+It works entirely from the local mirror -- the old host does not need to be
+online. Promotion:
+
+- preserves `podcast:guid` and every episode GUID **exactly**, so the show
+  keeps its identity in the Podcast Index ecosystem and apps don't
+  re-download episodes
+- imports value/valueRecipient splits, funding, license, medium, podroll,
+  copyright, locations, and all categories into your show settings, and
+  feed.xml re-emits them
+- hardlinks audio, transcripts, chapters, and artwork from `./mirror/media/`
+  into `./media/` (no extra disk space)
+- merges episodes by GUID -- anything already in your database is untouched,
+  and re-running promote is a no-op
+- sets `podcast:locked` to `no` so directories will accept the feed URL
+  change, and regenerates feed.xml immediately
+
+### What a mirror can NOT do: the feed URL problem
+
+Be honest with yourself about what happens on the day the primary host
+dies. Every listener's app is subscribed to the **old host's feed URL** --
+a domain you do not control. There is no redirection: nothing on this
+server can make `media.rss.com/yourshow/feed.xml` (or any other host's URL)
+point here. After promoting, you still have to move the audience:
+
+- **Apple Podcasts Connect, Spotify, YouTube Music, etc.** -- log in to each
+  dashboard and change the show's feed URL to yours. Apps that subscribe
+  through those directories will follow automatically on their next refresh.
+- **podcastindex.org** -- update the feed URL there too. Because promotion
+  preserves `podcast:guid`, Podcasting 2.0 apps can verify the new URL is
+  the same show.
+- **Anyone subscribed directly to the raw RSS URL** (old-school podcatchers,
+  RSS readers) will **not** follow automatically. They silently stop getting
+  new episodes until they manually resubscribe to your URL. There is nothing
+  any backup tool can do about this -- only the owner of the old domain
+  could redirect, and if they're gone, they can't.
+
+The real fix is to do this *before* the disaster: put your canonical feed
+URL on a domain you own (most hosts support a feed redirect while they're
+still alive), so listeners are subscribed to *your* URL and a failover
+becomes a server-side switch instead of a directory-by-directory scramble.
+
 ## Episode links ("From This Episode")
 
 Each episode can carry a webpage link, emitted as the item's `<link>` element.
@@ -238,6 +284,7 @@ termicast/
   generate.py         # Cron script -- regenerates feed.xml
   feed.py             # RSS XML generator
   mirror.py           # Cron script -- verbatim mirror of an external feed
+  promote.py          # Adopt the mirror as the primary feed (failover)
   store.py            # JSON data layer
   mirror/             # Mirrored feed.xml + downloaded assets (auto-created)
   podcast.json        # Episode database (auto-created on first run)

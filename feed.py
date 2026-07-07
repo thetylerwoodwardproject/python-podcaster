@@ -110,6 +110,15 @@ def transcript_mime(filename):
     return TRANSCRIPT_MIME.get(ext, 'text/plain')
 
 
+def location_attrs(loc):
+    """Build the attribute string for a podcast:location tag."""
+    attrs = ''
+    for key in ('rel', 'geo', 'osm', 'country'):
+        if loc.get(key):
+            attrs += f' {key}="{xa(loc[key])}"'
+    return attrs
+
+
 def build_chapters_json(chapters):
     if not chapters:
         return None
@@ -184,17 +193,63 @@ def generate_feed():
         L.append(f'    <link>{x(show.get("link", ""))}</link>')
         L.append('  </image>')
 
-    if show.get('category'):
-        if show.get('subcategory'):
-            L.append(f'  <itunes:category text="{xa(show["category"])}">')
-            L.append(f'    <itunes:category text="{xa(show["subcategory"])}"/>')
+    # Categories: a 'categories' list supports multiple entries (as adopted
+    # from a mirrored feed); the single category/subcategory pair is the
+    # original wizard-driven config.
+    cats = show.get('categories') or []
+    if not cats and show.get('category'):
+        cats = [{'category': show['category'], 'subcategory': show.get('subcategory')}]
+    for c in cats:
+        if c.get('subcategory'):
+            L.append(f'  <itunes:category text="{xa(c["category"])}">')
+            L.append(f'    <itunes:category text="{xa(c["subcategory"])}"/>')
             L.append('  </itunes:category>')
         else:
-            L.append(f'  <itunes:category text="{xa(show["category"])}"/>')
+            L.append(f'  <itunes:category text="{xa(c["category"])}"/>')
 
-    L.append('  <podcast:locked>no</podcast:locked>')
+    if show.get('copyright'):
+        L.append(f'  <copyright>{cdata(show["copyright"])}</copyright>')
+
+    locked_owner = f' owner="{xa(show["lockedOwner"])}"' if show.get('lockedOwner') else ''
+    L.append(f'  <podcast:locked{locked_owner}>{x(show.get("locked", "no"))}</podcast:locked>')
     if show.get('guid'):
         L.append(f'  <podcast:guid>{x(show["guid"])}</podcast:guid>')
+
+    if show.get('funding'):
+        f = show['funding']
+        L.append(f'  <podcast:funding url="{xa(f.get("url", ""))}">{x(f.get("text", ""))}</podcast:funding>')
+
+    if show.get('license'):
+        L.append(f'  <podcast:license>{x(show["license"])}</podcast:license>')
+
+    if show.get('medium'):
+        L.append(f'  <podcast:medium>{x(show["medium"])}</podcast:medium>')
+
+    if show.get('location'):
+        loc = show['location']
+        L.append(f'  <podcast:location{location_attrs(loc)}>{x(loc.get("name", ""))}</podcast:location>')
+
+    if show.get('value'):
+        v = show['value']
+        suggested = f' suggested="{xa(v["suggested"])}"' if v.get('suggested') else ''
+        L.append(f'  <podcast:value type="{xa(v.get("type", ""))}" method="{xa(v.get("method", ""))}"{suggested}>')
+        for r in v.get('recipients', []):
+            attrs = ''
+            for key in ('name', 'type', 'address', 'split', 'customKey', 'customValue', 'fee'):
+                if r.get(key) is not None:
+                    attrs += f' {key}="{xa(r[key])}"'
+            L.append(f'    <podcast:valueRecipient{attrs}/>')
+        L.append('  </podcast:value>')
+
+    if show.get('podroll'):
+        L.append('  <podcast:podroll>')
+        for item in show['podroll']:
+            attrs = ''
+            for key in ('feedGuid', 'feedUrl', 'itemGuid'):
+                if item.get(key):
+                    attrs += f' {key}="{xa(item[key])}"'
+            L.append(f'    <podcast:remoteItem{attrs}/>')
+        L.append('  </podcast:podroll>')
 
     # ── Episodes ──────────────────────────────────────────────────────────────
     for ep in episodes:
@@ -284,12 +339,7 @@ def generate_feed():
 
         if ep.get('location'):
             loc = ep['location']
-            attrs = ''
-            if loc.get('geo'):
-                attrs += f' geo="{xa(loc["geo"])}"'
-            if loc.get('osm'):
-                attrs += f' osm="{xa(loc["osm"])}"'
-            L.append(f'    <podcast:location{attrs}>{x(loc["name"])}</podcast:location>')
+            L.append(f'    <podcast:location{location_attrs(loc)}>{x(loc["name"])}</podcast:location>')
 
         if ep.get('season'):
             L.append(f'    <podcast:season>{ep["season"]}</podcast:season>')

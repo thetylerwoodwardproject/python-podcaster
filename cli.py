@@ -857,7 +857,7 @@ def mirror_menu():
   value splits, podroll, chapters...) is preserved exactly. Only asset URLs
   are rewritten to local downloads so the copy keeps playing if the source
   host goes down.''')
-        choices = ['Sync now', 'Change source URL', 'Remove mirror', 'Back']
+        choices = ['Sync now', 'Promote mirror to primary', 'Change source URL', 'Remove mirror', 'Back']
     else:
         print('''
   Mirror an existing feed (e.g. your current host's RSS URL) onto this
@@ -899,6 +899,38 @@ def mirror_menu():
         except Exception as e:
             print(f'\n  Sync failed: {e}')
         print()
+
+    elif action == 'Promote mirror to primary':
+        import promote as promotegen
+        print('''
+  This adopts the mirrored feed into YOUR feed, for when the mirrored host
+  is gone (or you're leaving it) and this server takes over as the real
+  host. It works entirely from the local mirror -- the old host does not
+  need to be online.
+
+  What it does:
+    - Show metadata, value splits, funding, podroll, categories, and
+      locations are imported into your show settings
+    - podcast:guid and every episode GUID are preserved EXACTLY, so the
+      show keeps its identity and apps don't re-download episodes
+    - Audio, transcripts, chapters, and artwork are hardlinked from
+      ./mirror/media/ into ./media/ (no extra disk used)
+    - Episodes are merged by GUID; nothing already in your database is
+      touched
+    - podcast:locked becomes "no" so directories will accept the feed URL
+      change; feed.xml is regenerated immediately
+
+  Afterwards, update your feed URL in Apple Podcasts Connect, Spotify,
+  and podcastindex.org to point at your feed.xml.''')
+        if prompt_bool('Promote the mirror into your primary feed?', False):
+            print()
+            try:
+                promotegen.promote_mirror(log=print)
+            except Exception as e:
+                print(f'\n  Promote failed: {e}')
+            print()
+        else:
+            print('\n  Cancelled.\n')
 
     elif action == 'Remove mirror':
         if prompt_bool('Remove mirror configuration? (downloaded files are NOT deleted)', False):
