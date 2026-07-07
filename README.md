@@ -23,7 +23,7 @@ static feed.xml that nginx serves directly.
 Clone from GitHub:
 
 ```bash
-git clone https://github.com/youruser/termicast /opt/termicast
+git clone https://github.com/thetylerwoodwardproject/termicast /opt/termicast
 ```
 
 Or copy manually:
