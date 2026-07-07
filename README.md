@@ -164,6 +164,39 @@ Chapters follow the [Podcast Index JSON format](https://github.com/Podcast-Index
 Each chapter supports a start time, title, optional link URL, and optional image URL.
 Chapter JSON files are written to `./media/` automatically when the feed regenerates.
 
+## Mirroring an external feed
+
+"Mirror external feed" in the CLI keeps a verbatim, self-contained copy of
+another host's feed on this server -- a failover if anything happens to your
+primary host.
+
+Unlike "Import from RSS feed" (a one-way *migration* that flattens the feed
+into this tool's data model), the mirror never re-generates the XML. The
+source feed is kept byte-for-byte, so every tag survives exactly as
+published: `podcast:guid`, `podcast:value` splits, `podcast:podroll`,
+`podcast:funding`, `psc:chapters`, multiple categories, and any future
+Podcasting 2.0 tags. The only changes are:
+
+- Asset URLs (enclosures, transcripts, chapters JSON and its images,
+  artwork, chapter images, the XSL stylesheet) are rewritten to local copies
+  downloaded into `./mirror/media/`.
+- The `atom:link rel="self"` is pointed at the mirror's own URL.
+
+Failed downloads keep their original source URL (a working remote link beats
+a broken local one) and are retried on the next sync. Syncs are incremental:
+already-downloaded assets are skipped.
+
+Set it up in the CLI, then serve and schedule it:
+
+```bash
+ln -s /opt/podcast-host/mirror /var/www/html/mirror
+crontab -e   # add:
+0 9 * * * cd /opt/podcast-host && python3 mirror.py >> /var/log/podcast-mirror.log 2>&1
+```
+
+The mirror is then live at `https://audio.example.com/mirror/feed.xml`,
+with all its media under `https://audio.example.com/mirror/media/`.
+
 ## Episode links ("From This Episode")
 
 Each episode can carry a webpage link, emitted as the item's `<link>` element.
@@ -204,7 +237,9 @@ podcast-host/
   cli.py              # Management CLI -- run this to manage episodes
   generate.py         # Cron script -- regenerates feed.xml
   feed.py             # RSS XML generator
+  mirror.py           # Cron script -- verbatim mirror of an external feed
   store.py            # JSON data layer
+  mirror/             # Mirrored feed.xml + downloaded assets (auto-created)
   podcast.json        # Episode database (auto-created on first run)
   feed.xml            # Generated RSS feed (symlinked into /var/www/html)
   media/              # Audio files, transcripts, chapter JSON

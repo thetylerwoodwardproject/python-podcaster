@@ -6,3 +6,4 @@ __pycache__/
 podcast.json
 feed.xml
 media/
+mirror/
