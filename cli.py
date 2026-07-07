@@ -593,7 +593,7 @@ def download_file(url, dest_path, label=''):
     url = re.sub(r'^https?://[^/]+/e(?:,\w+)*/(?=https?://)', '', url)
     try:
         res = requests.get(url, stream=True, timeout=30,
-                           headers={'User-Agent': 'podcast-host-importer/1.0'})
+                           headers={'User-Agent': 'termicast-importer/1.0'})
         res.raise_for_status()
         total = int(res.headers.get('content-length', 0))
         downloaded = 0
@@ -624,7 +624,7 @@ def import_from_rss():
 
     print('  Fetching feed...')
     try:
-        res = requests.get(feed_url, timeout=15, headers={'User-Agent': 'podcast-host-importer/1.0'})
+        res = requests.get(feed_url, timeout=15, headers={'User-Agent': 'termicast-importer/1.0'})
         res.raise_for_status()
         xml_text = res.text
     except Exception as e:
@@ -866,10 +866,10 @@ def mirror_menu():
   is a self-contained failover if anything happens to your primary host.
 
   Serve it by symlinking the ./mirror/ folder next to feed.xml, e.g.:
-    ln -s /opt/podcast-host/mirror /var/www/html/mirror
+    ln -s /opt/termicast/mirror /var/www/html/mirror
 
   Re-sync on a schedule with cron:
-    0 9 * * * cd /opt/podcast-host && python3 mirror.py >> /var/log/podcast-mirror.log 2>&1''')
+    0 9 * * * cd /opt/termicast && python3 mirror.py >> /var/log/termicast-mirror.log 2>&1''')
         choices = ['Set up mirror', 'Back']
 
     action = prompt_choice('Mirror', choices)
@@ -912,11 +912,11 @@ def mirror_menu():
 
 def first_run_wizard():
     print('\n╔══════════════════════════════════════╗')
-    print('║     Welcome to podcast-host!         ║')
+    print('║     Welcome to Termicast!            ║')
     print('║     Let\'s get you set up.            ║')
     print('╚══════════════════════════════════════╝')
     print("""
-  This looks like your first time running podcast-host.
+  This looks like your first time running Termicast.
   We need a few basics before you can do anything else.
 """)
 
@@ -985,7 +985,7 @@ def main():
         first_run_wizard()
 
     print('\n╔══════════════════════════════════════╗')
-    print('║        Podcast Feed Manager          ║')
+    print('║   Termicast - Podcast Feed Manager   ║')
     print('╚══════════════════════════════════════╝')
 
     while True:

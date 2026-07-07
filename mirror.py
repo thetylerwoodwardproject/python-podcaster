@@ -41,7 +41,7 @@ MIRROR_FEED_FILE = os.path.join(MIRROR_DIR, 'feed.xml')
 
 # rss.com (and some CDNs) return 403 to obvious bot user agents
 USER_AGENT = ('Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 '
-              'Firefox/128.0 podcast-host-mirror/1.0')
+              'Firefox/128.0 termicast-mirror/1.0')
 
 EXT_FROM_TYPE = {
     'audio/mpeg': '.mp3',

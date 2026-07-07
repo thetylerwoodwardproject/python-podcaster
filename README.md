@@ -1,4 +1,4 @@
-# podcast-host
+# Termicast
 
 Self-hosted Podcast 2.0 RSS manager. No server process needed -- generates a
 static feed.xml that nginx serves directly.
@@ -23,13 +23,13 @@ static feed.xml that nginx serves directly.
 Clone from GitHub:
 
 ```bash
-git clone https://github.com/youruser/podcast-host /opt/podcast-host
+git clone https://github.com/youruser/termicast /opt/termicast
 ```
 
 Or copy manually:
 
 ```bash
-scp -r podcast-host/ user@yourserver:/opt/podcast-host
+scp -r termicast/ user@yourserver:/opt/termicast
 ```
 
 ### 2. Install dependencies
@@ -42,7 +42,7 @@ apt install nginx certbot python3-certbot-nginx
 ### 3. Create the media directory
 
 ```bash
-mkdir -p /opt/podcast-host/media
+mkdir -p /opt/termicast/media
 ```
 
 ### 4. First run
@@ -51,7 +51,7 @@ The first time you run the script it walks you through a setup wizard asking
 for your domain, show title, description, and author name.
 
 ```bash
-cd /opt/podcast-host
+cd /opt/termicast
 python3 cli.py
 ```
 
@@ -61,14 +61,14 @@ nginx serves files from `/var/www/html` by default. Symlinking keeps your
 files in one place while letting nginx find them without any path gymnastics.
 
 ```bash
-ln -s /opt/podcast-host/feed.xml /var/www/html/feed.xml
-ln -s /opt/podcast-host/media /var/www/html/media
+ln -s /opt/termicast/feed.xml /var/www/html/feed.xml
+ln -s /opt/termicast/media /var/www/html/media
 ```
 
 ### 6. Configure nginx
 
 ```bash
-cp /opt/podcast-host/nginx.conf.example /etc/nginx/sites-available/audio.example.com
+cp /opt/termicast/nginx.conf.example /etc/nginx/sites-available/audio.example.com
 ```
 
 Edit the file and replace `audio.example.com` with your actual domain. Then enable it:
@@ -110,7 +110,7 @@ crontab -e
 Add this line (runs daily at 8am -- adjust to match when your episodes go live):
 
 ```
-0 8 * * * cd /opt/podcast-host && python3 generate.py >> /var/log/podcast.log 2>&1
+0 8 * * * cd /opt/termicast && python3 generate.py >> /var/log/termicast.log 2>&1
 ```
 
 Your feed is now live at `https://audio.example.com/feed.xml`.
@@ -120,7 +120,7 @@ Your feed is now live at `https://audio.example.com/feed.xml`.
 ## Usage
 
 ```bash
-cd /opt/podcast-host
+cd /opt/termicast
 python3 cli.py
 ```
 
@@ -189,9 +189,9 @@ already-downloaded assets are skipped.
 Set it up in the CLI, then serve and schedule it:
 
 ```bash
-ln -s /opt/podcast-host/mirror /var/www/html/mirror
+ln -s /opt/termicast/mirror /var/www/html/mirror
 crontab -e   # add:
-0 9 * * * cd /opt/podcast-host && python3 mirror.py >> /var/log/podcast-mirror.log 2>&1
+0 9 * * * cd /opt/termicast && python3 mirror.py >> /var/log/termicast-mirror.log 2>&1
 ```
 
 The mirror is then live at `https://audio.example.com/mirror/feed.xml`,
@@ -233,7 +233,7 @@ You can disable OP3 by clearing the `op3Prefix` field in "Edit show settings".
 ## File structure
 
 ```
-podcast-host/
+termicast/
   cli.py              # Management CLI -- run this to manage episodes
   generate.py         # Cron script -- regenerates feed.xml
   feed.py             # RSS XML generator
